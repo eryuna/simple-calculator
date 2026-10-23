@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Calculator</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: linear-gradient(135deg, #fce4ec, #e8eafc);
+      color: #20243a;
+    }
+
+    .calculator {
+      width: 100%;
+      max-width: 390px;
+      padding: 24px;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 16px 45px rgba(110, 85, 130, 0.15);
+    }
+
+    h1 {
+      font-size: 25px;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      color: #888095;
+      font-size: 13px;
+      margin-bottom: 24px;
+    }
+
+    .display {
+      background: #f8f1f7;
+      border-radius: 18px;
+      padding: 20px 16px;
+      min-height: 115px;
+      margin-bottom: 18px;
+      text-align: right;
+      overflow: hidden;
+    }
+
+    #expression {
+      min-height: 22px;
+      color: #898197;
+      font-size: 15px;
+      overflow-wrap: anywhere;
+    }
+
+    #result {
+      font-size: clamp(30px, 9vw, 40px);
+      font-weight: bold;
+      margin-top: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      min-width: 0;
+      height: 60px;
+      border: none;
+      border-radius: 15px;
+      background: #f6f5fa;
+      color: #28263b;
+      font-size: 21px;
+      cursor: pointer;
+      transition: transform 0.12s, filter 0.12s;
+    }
+
+    button:hover {
+      filter: brightness(0.96);
+    }
+
+    button:active {
+      transform: scale(0.94);
+    }
+
+    .utility {
+      background: #f9dce8;
+    }
+
+    .operator {
+      background: #e4def7;
+    }
+
+    .equals {
+      background: linear-gradient(135deg, #f4a8c6, #d9b9f5);
+      font-weight: bold;
+    }
+
+    .zero {
+      grid-column: span 2;
+    }
+
+    .history-title {
+      margin-top: 24px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+    }
+
+    #history {
+      list-style: none;
+      color: #777286;
+      font-size: 13px;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    #history li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0edf4;
+    }
+
+    .clear-history {
+      height: auto;
+      background: none;
+      color: #9a7197;
+      font-size: 12px;
+      padding: 4px;
+    }
+
+    footer {
+      text-align: center;
+      color: #a09aaa;
+      font-size: 11px;
+      margin-top: 22px;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="calculator">
+    <h1>My Calculator ♡</h1>
+    <p class="subtitle">Simple · Fast · Easy to Use</p>
+
+    <section class="display" aria-live="polite">
+      <div id="expression">Ready to calculate</div>
+      <div id="result">0</div>
+    </section>
+
+    <section class="keys">
+      <button class="utility" onclick="clearAll()">AC</button>
+      <button class="utility" onclick="backspace()">⌫</button>
+      <button class="utility" onclick="percent()">%</button>
+      <button class="operator" onclick="addOperator('/')">÷</button>
+
+      <button onclick="append('7')">7</button>
+      <button onclick="append('8')">8</button>
+      <button onclick="append('9')">9</button>
+      <button class="operator" onclick="addOperator('*')">×</button>
+
+      <button onclick="append('4')">4</button>
+      <button onclick="append('5')">5</button>
+      <button onclick="append('6')">6</button>
+      <button class="operator" onclick="addOperator('-')">−</button>
+
+      <button onclick="append('1')">1</button>
+      <button onclick="append('2')">2</button>
+      <button onclick="append('3')">3</button>
+      <button class="operator" onclick="addOperator('+')">+</button>
+
+      <button class="zero" onclick="append('0')">0</button>
+      <button onclick="decimal()">.</button>
+      <button class="equals" onclick="calculate()">=</button>
+    </section>
+
+    <section>
+      <div class="history-title">
+        <strong>Calculation History</strong>
+        <button class="clear-history" onclick="clearHistory()">
+          Clear
+        </button>
+      </div>
+      <ul id="history">
+        <li>No calculations yet</li>
+      </ul>
+    </section>
+
+    <footer>Made with ♡ · Simple Calculator</footer>
+  </main>
+
+  <script>
+    let expression = "";
+    let justCalculated = false;
+    const expressionEl = document.getElementById("expression");
+    const resultEl = document.getElementById("result");
+    const historyEl = document.getElementById("history");
+
+    function formatNumber(value) {
+      return String(value);
+    }
+
+    function updateDisplay() {
+      expressionEl.textContent = expression || "Ready to calculate";
+      resultEl.textContent = expression || "0";
+    }
+
+    function append(value) {
+      if (justCalculated) {
+        expression = "";
+        justCalculated = false;
+      }
+
+      if (expression.length >= 80) return;
+      expression += value;
+      updateDisplay();
+    }
+
+    function addOperator(operator) {
+      if (!expression) {
+        if (operator === "-") append("-");
+        return;
+      }
+
+      justCalculated = false;
+
+      if (/[+\-*/.]$/.test(expression)) {
+        expression = expression.slice(0, -1);
+      }
+
+      expression += operator;
+      updateDisplay();
+    }
+
+    function decimal() {
+      if (justCalculated) {
+        expression = "";
+        justCalculated = false;
+      }
+
+      const currentNumber = expression.split(/[+\-*/]/).pop();
+
+      if (!currentNumber.includes(".")) {
+        expression += currentNumber ? "." : "0.";
+        updateDisplay();
+      }
+    }
+
+    function backspace() {
+      if (justCalculated) {
+        clearAll();
+        return;
+      }
+
+      expression = expression.slice(0, -1);
+      updateDisplay();
+    }
+
+    function clearAll() {
+      expression = "";
+      justCalculated = false;
+      updateDisplay();
+    }
+
+    function percent() {
+      const match = expression.match(/(\d*\.?\d+)$/);
+
+      if (match) {
+        const number = Number(match[0]) / 100;
+        expression =
+          expression.slice(0, -match[0].length) + number;
+        justCalculated = false;
+        updateDisplay();
+      }
+    }
+
+    function calculate() {
+      if (!expression) return;
+
+      try {
+        if (!/^[0-9+\-*/.() ]+$/.test(expression)) {
+          throw new Error("Invalid expression");
+        }
+
+        if (/[+\-*/.]$/.test(expression)) {
+          throw new Error("Incomplete expression");
+        }
+
+        const original = expression;
+        const value = Function(
+          '"use strict"; return (' + expression + ')'
+        )();
+
+        if (typeof value !== "number" || !Number.isFinite(value)) {
+          throw new Error("Invalid result");
+        }
+
+        const rounded = Number(value.toPrecision(12));
+        expressionEl.textContent = original + " =";
+        resultEl.textContent = formatNumber(rounded);
+
+        addHistory(original, rounded);
+        expression = String(rounded);
+        justCalculated = true;
+      } catch (error) {
+        expressionEl.textContent = "Invalid calculation";
+        resultEl.textContent = "Error";
+        expression = "";
+        justCalculated = false;
+      }
+    }
+
+    function addHistory(original, answer) {
+      if (historyEl.children.length === 1 &&
+          historyEl.textContent.includes("No calculations yet")) {
+        historyEl.innerHTML = "";
+      }
+
+      const item = document.createElement("li");
+      const formula = document.createElement("span");
+      const result = document.createElement("strong");
+
+      formula.textContent = original;
+      result.textContent = String(answer);
+
+      item.append(formula, result);
+      historyEl.prepend(item);
+
+      while (historyEl.children.length > 10) {
+        historyEl.lastElementChild.remove();
+      }
+    }
+
+    function clearHistory() {
+      historyEl.innerHTML = "";
+      const item = document.createElement("li");
+      item.textContent = "No calculations yet";
+      historyEl.appendChild(item);
+    }
+
+    document.addEventListener("keydown", (event) => {
+      const key = event.key;
+
+      if (/^[0-9]$/.test(key)) append(key);
+      else if (key === ".") decimal();
+      else if (["+", "-", "*", "/"].includes(key)) addOperator(key);
+      else if (key === "Enter" || key === "=") calculate();
+      else if (key === "Backspace") backspace();
+      else if (key === "Escape") clearAll();
+      else if (key === "%") percent();
+    });
+
+    updateDisplay();
+  </script>
+</body>
+</html>
